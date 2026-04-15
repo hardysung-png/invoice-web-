@@ -31,16 +31,18 @@ export function transformNotionToInvoice(
     props.발행일?.date?.start || new Date().toISOString().split('T')[0]
   const validUntil =
     props.유효기간?.date?.start || getDefaultValidUntil(issueDate)
-  // Notion의 '총 금액' 필드가 양수이면 사용, 아니면 항목들 합산으로 계산
+  const status = mapKoreanStatus(props.상태?.select?.name)
+
+  // 항목 먼저 변환 (quantity, unitPrice, amount 올바르게 계산됨)
+  const items = itemPages.map(transformNotionToItem)
+
+  // 총액: Notion 필드 값이 양수이면 사용, 아니면 변환된 항목들의 amount 합산
+  // calculateTotalFromItems 대신 이미 올바르게 변환된 items를 사용해 정합성 보장
   const notionTotal = props['총 금액']?.number
   const totalAmount =
     notionTotal !== null && notionTotal !== undefined && notionTotal > 0
       ? notionTotal
-      : calculateTotalFromItems(itemPages)
-  const status = mapKoreanStatus(props.상태?.select?.name)
-
-  // 항목 변환
-  const items = itemPages.map(transformNotionToItem)
+      : items.reduce((sum, item) => sum + item.amount, 0)
 
   return {
     id: page.id,
