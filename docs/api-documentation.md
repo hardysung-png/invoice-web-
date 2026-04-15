@@ -3,9 +3,10 @@
 ## 📋 목차
 
 1. [환경 변수](#환경-변수)
-2. [주요 함수 API](#주요-함수-api)
-3. [Notion API 통합](#notion-api-통합)
-4. [컴포넌트 API](#컴포넌트-api)
+2. [HTTP API 엔드포인트](#http-api-엔드포인트)
+3. [주요 함수 API](#주요-함수-api)
+4. [Notion API 통합](#notion-api-통합)
+5. [컴포넌트 API](#컴포넌트-api)
 
 ---
 
@@ -86,6 +87,96 @@ SESSION_SECRET=AlwrgLHiQyGEx01dnwmuPc0V+NIRcmzp
 ```bash
 NEXT_PUBLIC_BASE_URL=https://yourdomain.com
 ```
+
+---
+
+## 🌐 HTTP API 엔드포인트
+
+### `POST /api/generate-pdf`
+
+견적서 데이터를 받아 PDF 파일을 생성하고 반환합니다.
+
+**소스**: `src/app/api/generate-pdf/route.ts`
+
+#### 요청
+
+| 항목         | 값                          |
+| ------------ | --------------------------- |
+| Method       | `POST`                      |
+| Content-Type | `application/json`          |
+| 인증         | 불필요 (Rate Limiting 적용) |
+
+**Request Body**:
+
+```typescript
+{
+  invoice: Invoice // 견적서 전체 데이터 객체
+}
+```
+
+`Invoice` 타입 (`src/types/invoice.ts`):
+
+```typescript
+interface Invoice {
+  id: string // Notion Page ID
+  invoiceNumber: string // 견적서 번호 (필수)
+  clientName: string // 클라이언트명
+  issueDate: string // 발행일 (ISO 8601)
+  validUntil: string // 유효기간 (ISO 8601)
+  items: InvoiceItem[] // 견적 항목 목록
+  totalAmount: number // 총 금액
+  status: InvoiceStatus // 'pending' | 'approved' | 'rejected'
+}
+```
+
+**예시**:
+
+```bash
+curl -X POST http://localhost:3000/api/generate-pdf \
+  -H "Content-Type: application/json" \
+  -d '{
+    "invoice": {
+      "id": "2856a10d-310b-80e0-8baa-d4445d6baf92",
+      "invoiceNumber": "INV-2025-001",
+      "clientName": "ABC 회사",
+      "issueDate": "2025-10-01",
+      "validUntil": "2025-10-31",
+      "items": [
+        { "id": "1", "description": "웹 개발", "quantity": 1, "unitPrice": 1000000, "amount": 1000000 }
+      ],
+      "totalAmount": 1000000,
+      "status": "pending"
+    }
+  }' \
+  --output invoice-INV-2025-001.pdf
+```
+
+#### 응답
+
+**성공 (200 OK)**:
+
+| 헤더                  | 값                                                      |
+| --------------------- | ------------------------------------------------------- |
+| `Content-Type`        | `application/pdf`                                       |
+| `Content-Disposition` | `attachment; filename="invoice-{sanitized-number}.pdf"` |
+| `Cache-Control`       | `public, max-age=0`                                     |
+
+- **파일명 규칙**: `invoice-{sanitizeFilename(invoiceNumber)}.pdf`
+  - `sanitizeFilename`은 공백/특수문자를 안전한 문자로 변환
+  - 예: `INV-2025-001` → `invoice-INV-2025-001.pdf`
+
+**오류 응답**:
+
+| 상태 코드                   | 조건                                | 응답 본문                                                    |
+| --------------------------- | ----------------------------------- | ------------------------------------------------------------ |
+| `400 Bad Request`           | `invoice` 또는 `invoiceNumber` 누락 | `{ "error": "유효하지 않은 견적서 데이터입니다." }`          |
+| `429 Too Many Requests`     | Rate Limit 초과 (분당 10회)         | `{ "error": "요청 한도를 초과했습니다.", "retryAfter": 60 }` |
+| `500 Internal Server Error` | PDF 생성 실패                       | `{ "error": "PDF 생성 중 오류가 발생했습니다." }`            |
+
+**Rate Limiting**:
+
+- 분당 최대 10회 요청 (IP 기반)
+- 초과 시 `Retry-After` 헤더와 함께 429 반환
 
 ---
 

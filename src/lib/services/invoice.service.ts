@@ -3,7 +3,12 @@
  * 견적서 데이터 조회 및 처리 로직
  */
 
-import { createCachedInvoiceFetcher, getInvoiceWithDedup } from '@/lib/cache'
+import {
+  createCachedInvoiceFetcher,
+  createCachedInvoiceListFetcher,
+  createCachedInvoiceSearchFetcher,
+  getInvoiceWithDedup,
+} from '@/lib/cache'
 import { ERROR_MESSAGES } from '@/lib/constants'
 import { logger } from '@/lib/logger'
 import { getDataSourceId, notion } from '@/lib/notion'
@@ -415,4 +420,53 @@ export async function searchInvoices(
     })
     throw new Error('견적서 검색에 실패했습니다')
   }
+}
+
+/**
+ * 캐싱이 적용된 견적서 목록 조회 함수
+ * unstable_cache로 30초간 캐싱됩니다.
+ * 동일한 pageSize, cursor, sortBy 조합으로 호출 시 캐시된 결과를 반환합니다.
+ */
+export const getCachedInvoicesFromNotion = createCachedInvoiceListFetcher(
+  getInvoicesFromNotion
+)
+
+/**
+ * 캐싱이 적용된 견적서 검색 함수
+ * unstable_cache로 15초간 캐싱됩니다.
+ * 동일한 검색 조건으로 호출 시 캐시된 결과를 반환합니다.
+ *
+ * searchInvoices는 InvoiceFilters 객체를 받지만 unstable_cache는
+ * 직렬화 가능한 기본 타입 인자를 권장하므로 필터를 분해하여 전달합니다.
+ */
+const _cachedSearchFetcher = createCachedInvoiceSearchFetcher(
+  async (query, status, dateFrom, dateTo, pageSize, startCursor) => {
+    return searchInvoices(
+      { query, status, dateFrom, dateTo },
+      pageSize,
+      startCursor
+    )
+  }
+)
+
+/**
+ * 캐싱이 적용된 견적서 검색 (InvoiceFilters 인터페이스 유지)
+ * @param filters - 검색 필터
+ * @param pageSize - 페이지당 항목 수
+ * @param startCursor - 시작 커서
+ * @returns InvoiceListResult 객체
+ */
+export async function getCachedSearchInvoices(
+  filters: InvoiceFilters,
+  pageSize: number = 10,
+  startCursor?: string
+): Promise<InvoiceListResult> {
+  return _cachedSearchFetcher(
+    filters.query,
+    filters.status,
+    filters.dateFrom,
+    filters.dateTo,
+    pageSize,
+    startCursor
+  )
 }

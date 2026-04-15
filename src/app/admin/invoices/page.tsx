@@ -1,6 +1,6 @@
 import {
-  getInvoicesFromNotion,
-  searchInvoices,
+  getCachedInvoicesFromNotion,
+  getCachedSearchInvoices,
   type InvoiceFilters,
 } from '@/lib/services/invoice.service'
 import { InvoiceTable } from '@/components/admin/invoice-table'
@@ -46,9 +46,10 @@ async function InvoiceListContent({
     filters.dateTo
   )
 
+  // 캐싱이 적용된 함수 사용 (30초/15초 revalidate)
   const { invoices, nextCursor, hasMore } = hasFilters
-    ? await searchInvoices(filters, 10, cursor)
-    : await getInvoicesFromNotion(10, cursor, sort)
+    ? await getCachedSearchInvoices(filters, 10, cursor)
+    : await getCachedInvoicesFromNotion(10, cursor, sort)
 
   if (invoices.length === 0) {
     return (

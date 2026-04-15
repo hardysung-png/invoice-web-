@@ -171,6 +171,40 @@
  */
 
 /**
+ * 테스트 시나리오 7: 보안 헤더 검증 (Task 023 완료분)
+ *
+ * 목표: next.config.ts에서 설정한 보안 헤더가 실제 응답에 포함되는지 확인
+ *
+ * 실행 순서:
+ * 1. browser_navigate로 견적서 페이지 접근
+ *    - URL: http://localhost:3000/invoice/[valid-notion-page-id]
+ *
+ * 2. browser_network_requests 도구로 응답 헤더 확인
+ *    - 요청 URL: http://localhost:3000/invoice/[id]
+ *
+ * 3. 다음 보안 헤더가 응답에 포함되는지 확인:
+ *    - X-Frame-Options: DENY
+ *    - X-Content-Type-Options: nosniff
+ *    - Referrer-Policy: origin-when-cross-origin
+ *    - X-XSS-Protection: 1; mode=block
+ *    - Content-Security-Policy: default-src 'self'; ... (개발 환경은 unsafe-eval 포함)
+ *    - Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+ *
+ * 4. 관리자 로그인 페이지(/admin-login)에서도 동일 헤더 확인
+ *
+ * 참고:
+ * - Strict-Transport-Security(HSTS)는 프로덕션 환경에서만 적용 (개발 환경 제외)
+ * - 개발 환경에서 Content-Security-Policy의 script-src에 'unsafe-eval' 포함 (Next.js Turbopack 요구사항)
+ *
+ * 검증 기준:
+ * - ✅ X-Frame-Options: DENY 헤더 존재
+ * - ✅ X-Content-Type-Options: nosniff 헤더 존재
+ * - ✅ Content-Security-Policy 헤더 존재 및 'self' 기본 정책 확인
+ * - ✅ Permissions-Policy 헤더 존재
+ * - ✅ Server 또는 X-Powered-By 헤더 없음 (poweredByHeader: false)
+ */
+
+/**
  * 실행 방법:
  *
  * 1. 개발 서버 시작:
@@ -183,7 +217,7 @@
  *    - browser_snapshot: 페이지 상태 확인
  *    - browser_click: 버튼 클릭
  *    - browser_wait_for: 요소/텍스트 대기
- *    - browser_network_requests: 네트워크 요청 모니터링
+ *    - browser_network_requests: 네트워크 요청 및 응답 헤더 모니터링
  *
  * 3. 각 시나리오를 순서대로 실행하여 검증
  *
@@ -191,6 +225,7 @@
  *    - 각 시나리오 통과/실패 여부
  *    - 성능 지표 (페이지 로드 시간, PDF 생성 시간)
  *    - 발견된 이슈 및 개선 사항
+ *    - docs/test-results-phase8.md에 결과 기록
  */
 
 export {}

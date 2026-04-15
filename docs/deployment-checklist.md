@@ -30,6 +30,25 @@
 - [ ] `.env.local` 파일이 `.gitignore`에 포함되어 있음
 - [ ] 민감한 정보가 코드에 하드코딩되지 않음
 
+### 보안 헤더 검증 (Task 023)
+
+배포 후 다음 명령어로 보안 헤더 존재 여부를 확인합니다:
+
+```bash
+curl -I https://your-domain.vercel.app/invoice/guide
+```
+
+확인 항목:
+
+- [ ] `X-Frame-Options: DENY`
+- [ ] `X-Content-Type-Options: nosniff`
+- [ ] `X-XSS-Protection: 1; mode=block`
+- [ ] `Referrer-Policy: origin-when-cross-origin`
+- [ ] `Content-Security-Policy: default-src 'self'; ...` (프로덕션에서 `unsafe-eval` 미포함)
+- [ ] `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`
+- [ ] `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` (프로덕션 전용)
+- [ ] `X-Powered-By` 헤더 **없음** (`poweredByHeader: false`)
+
 ---
 
 ## 🚀 Vercel 배포
@@ -113,6 +132,15 @@ NODE_ENV=production
 - [ ] 모바일 반응형
   - 모바일 브라우저에서 정상 표시
   - 터치 인터랙션 작동
+
+### 캐싱 검증 (Task 023)
+
+`unstable_cache` 기반 Notion API 캐싱이 정상 작동하는지 확인합니다:
+
+- [ ] 견적서 목록 첫 로드 후 동일 URL 재접근 시 응답 속도 개선 확인 (30초 캐시)
+- [ ] 검색/필터 결과 동일 조건 재요청 시 응답 속도 개선 확인 (15초 캐시)
+- [ ] 관리자 레이아웃 스트리밍: 헤더/네비게이션 즉시 렌더링, 목록 비동기 로드 확인
+- [ ] 캐시 태그 무효화: 데이터 변경 후 `revalidateInvoiceCache()` 호출 시 캐시 갱신 확인
 
 ### 성능 확인
 
@@ -244,9 +272,9 @@ NODE_ENV=production
 
 ## 📝 배포 기록
 
-| 날짜 | 버전 | 변경사항 | 배포자 |
-| ---- | ---- | -------- | ------ |
-|      |      |          |        |
+| 날짜       | 버전 | 변경사항                                                                            | 배포자     |
+| ---------- | ---- | ----------------------------------------------------------------------------------- | ---------- |
+| 2026-04-15 | v2.0 | Phase 8 완료: 통합 테스트, 성능 최적화(unstable_cache), 보안 헤더(CSP/HSTS), 문서화 | hardy.sung |
 
 ---
 
