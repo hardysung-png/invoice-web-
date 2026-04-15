@@ -36,13 +36,10 @@ export function transformNotionToInvoice(
   // 항목 먼저 변환 (quantity, unitPrice, amount 올바르게 계산됨)
   const items = itemPages.map(transformNotionToItem)
 
-  // 총액: Notion 필드 값이 양수이면 사용, 아니면 변환된 항목들의 amount 합산
-  // calculateTotalFromItems 대신 이미 올바르게 변환된 items를 사용해 정합성 보장
-  const notionTotal = props['총 금액']?.number
-  const totalAmount =
-    notionTotal !== null && notionTotal !== undefined && notionTotal > 0
-      ? notionTotal
-      : items.reduce((sum, item) => sum + item.amount, 0)
+  // 총액: 항상 변환된 항목들의 amount 합산으로 계산
+  // Notion의 총 금액 필드는 formula/rollup일 수 있어 런타임 타입이 다를 수 있으므로
+  // items에서 직접 계산하여 신뢰성을 보장함
+  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
 
   return {
     id: page.id,

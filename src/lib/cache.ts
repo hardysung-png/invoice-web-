@@ -45,7 +45,7 @@ export function createCachedInvoiceFetcher(
     async (pageId: string) => {
       return await fetcher(pageId)
     },
-    ['invoice-v2'], // 캐시 키 (v2: totalAmount 계산 버그 수정으로 키 갱신)
+    ['invoice-v3'], // 캐시 키 (v3: totalAmount를 항상 items에서 직접 계산하도록 변경)
     {
       revalidate: CACHE_CONFIG.INVOICE_REVALIDATE, // 60초 후 재검증
       tags: [...CACHE_CONFIG.INVOICE_TAGS], // 태그 기반 무효화
