@@ -14,10 +14,12 @@ import {
 import type { Invoice } from '@/types/invoice'
 import { formatDate, formatCurrency } from '@/lib/format'
 
-// 한글 폰트 등록 (Google Fonts CDN 사용)
+// 한글 폰트 등록 (로컬 파일 사용)
+// 외부 URL 대신 public/fonts/ 로컬 경로를 사용하여 Vercel 서버리스 환경에서
+// 네트워크 지연 및 외부 CDN 차단으로 인한 PDF 생성 실패를 방지합니다.
 Font.register({
   family: 'NotoSansKR',
-  src: 'https://fonts.gstatic.com/s/notosanskr/v36/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzuoyeLTq8H4hfeE.ttf',
+  src: '/fonts/NotoSansKR-Regular.ttf',
 })
 
 // PDF 스타일 정의

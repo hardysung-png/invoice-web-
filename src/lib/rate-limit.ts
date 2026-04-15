@@ -1,7 +1,12 @@
 /**
  * Rate Limiting 유틸리티
- * in-memory Map을 사용한 간단한 Rate Limiting 구현
- * API 엔드포인트 보호를 위해 분당 요청 수를 제한합니다.
+ *
+ * ⚠️ 중요: 이 구현은 in-memory Map을 사용합니다.
+ * Vercel 서버리스/Edge 환경에서는 인스턴스 간 상태가 공유되지 않으므로
+ * 완전한 Rate Limiting 보장은 어렵습니다. (MVP/소규모 트래픽에서는 허용 가능)
+ *
+ * 프로덕션 대규모 서비스에서는 @upstash/ratelimit + @upstash/redis 사용을 권장합니다:
+ * https://github.com/upstash/ratelimit
  */
 
 /**
@@ -16,28 +21,33 @@ interface RateLimitRecord {
 
 /**
  * IP별 요청 기록을 저장하는 Map
- * Key: IP 주소
+ * Key: IP 주소 (또는 식별자)
  * Value: RateLimitRecord
  */
 const requestMap = new Map<string, RateLimitRecord>()
 
 /**
- * 메모리 누수 방지를 위한 주기적 정리
- * 1분마다 만료된 기록 삭제
+ * 만료된 항목 지연 정리
+ * setInterval 대신 요청 시점에 주기적으로 정리하여
+ * Edge Runtime 환경에서의 타이머 부작용을 방지합니다.
  */
-setInterval(() => {
+function cleanupExpiredEntries(): void {
   const now = Date.now()
   for (const [key, record] of requestMap.entries()) {
     if (now > record.resetTime) {
       requestMap.delete(key)
     }
   }
-}, 60000) // 1분마다 실행
+}
+
+/** 정리 주기 추적 (매 100번째 요청마다 정리) */
+let requestCounter = 0
+const CLEANUP_INTERVAL = 100
 
 /**
  * Rate Limit 검사 결과 인터페이스
  */
-interface RateLimitResult {
+export interface RateLimitResult {
   /** 요청 허용 여부 */
   allowed: boolean
   /** 남은 요청 횟수 */
@@ -71,6 +81,14 @@ export function checkRateLimit(
   windowMs: number = 60000
 ): RateLimitResult {
   const now = Date.now()
+
+  // 주기적 만료 항목 정리 (100번 요청마다)
+  requestCounter++
+  if (requestCounter >= CLEANUP_INTERVAL) {
+    requestCounter = 0
+    cleanupExpiredEntries()
+  }
+
   const record = requestMap.get(identifier)
 
   // 기록이 없거나 윈도우가 만료된 경우 - 새 윈도우 시작

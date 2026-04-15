@@ -21,7 +21,11 @@ const envSchema = z.object({
   NOTION_DATABASE_ID: z
     .string()
     .min(1, 'NOTION_DATABASE_ID는 필수입니다')
-    .length(32, 'NOTION_DATABASE_ID는 32자여야 합니다'),
+    // Notion URL에서 복사 시 하이픈이 포함된 36자 UUID가 올 수 있으므로 자동 제거
+    .transform(id => id.replace(/-/g, ''))
+    .pipe(
+      z.string().length(32, 'NOTION_DATABASE_ID는 32자(하이픈 제외)여야 합니다')
+    ),
   // 관리자 인증 환경변수
   ADMIN_PASSWORD: z
     .string()
