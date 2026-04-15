@@ -53,3 +53,7 @@ test-notion-*.js
 
 # Shrimp Task Manager
 shrimp_data/
+
+# 스크린샷 (임시 파일)
+screenshot-*.png
+screenshot-*.jpg
