@@ -3,6 +3,7 @@
  * @react-pdf/renderer를 사용한 견적서 PDF 생성 컴포넌트
  */
 
+import path from 'path'
 import {
   Document,
   Page,
@@ -15,11 +16,11 @@ import type { Invoice } from '@/types/invoice'
 import { formatDate, formatCurrency } from '@/lib/format'
 
 // 한글 폰트 등록 (로컬 파일 사용)
-// 외부 URL 대신 public/fonts/ 로컬 경로를 사용하여 Vercel 서버리스 환경에서
-// 네트워크 지연 및 외부 CDN 차단으로 인한 PDF 생성 실패를 방지합니다.
+// Vercel 서버리스 환경에서는 절대경로(/fonts/...)가 아닌
+// process.cwd() 기준 상대경로로 접근해야 합니다.
 Font.register({
   family: 'NotoSansKR',
-  src: '/fonts/NotoSansKR-Regular.ttf',
+  src: path.join(process.cwd(), 'public', 'fonts', 'NotoSansKR-Regular.ttf'),
 })
 
 // PDF 스타일 정의
