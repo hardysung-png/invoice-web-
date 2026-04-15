@@ -32,7 +32,7 @@ const envSchema = z.object({
     .min(8, '관리자 비밀번호는 최소 8자 이상이어야 합니다'),
   SESSION_SECRET: z
     .string()
-    .length(32, 'SESSION_SECRET은 정확히 32자여야 합니다'),
+    .min(32, 'SESSION_SECRET은 최소 32자 이상이어야 합니다'),
 })
 
 export const env = envSchema.parse({
