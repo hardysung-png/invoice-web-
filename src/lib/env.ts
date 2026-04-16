@@ -35,6 +35,8 @@ const envSchema = z.object({
     .min(32, 'SESSION_SECRET은 최소 32자 이상이어야 합니다'),
   // Slack 알림 (선택: 미설정 시 경고만 출력하고 앱은 정상 작동)
   SLACK_WEBHOOK_URL: z.string().url().optional(),
+  // 크론 잡 인증 시크릿 (선택: 미설정 시 크론 API가 401 반환)
+  CRON_SECRET: z.string().min(16).optional(),
 })
 
 export const env = envSchema.parse({
@@ -47,6 +49,7 @@ export const env = envSchema.parse({
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
   SESSION_SECRET: process.env.SESSION_SECRET,
   SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL,
+  CRON_SECRET: process.env.CRON_SECRET,
 })
 
 // 프로덕션 환경 보안 검증

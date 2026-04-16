@@ -455,6 +455,88 @@ const _cachedSearchFetcher = createCachedInvoiceSearchFetcher(
 )
 
 /**
+ * 특정 날짜에 만료되는 견적서 목록 조회 (D-1 알림용)
+ * expires_at 가 date와 동일한 sent/viewed/negotiating 상태의 견적서를 반환합니다.
+ *
+ * @param date - 조회 기준일 (ISO 8601 날짜 문자열, 예: "2026-04-17")
+ */
+export async function findExpiringAt(date: string): Promise<Invoice[]> {
+  const dataSourceId = await getDataSourceId()
+
+  const response = await notion.dataSources.query({
+    data_source_id: dataSourceId,
+    page_size: 100,
+    filter: {
+      and: [
+        {
+          property: 'expires_at',
+          date: { equals: date },
+        },
+        {
+          or: [
+            { property: '상태', select: { equals: '발송됨' } },
+            { property: '상태', select: { equals: '검토중' } },
+            { property: '상태', select: { equals: '네고중' } },
+          ],
+        },
+      ],
+    },
+  })
+
+  return Promise.all(
+    response.results
+      .filter((page): page is NotionPage => 'properties' in page)
+      .filter(isInvoicePage)
+      .map(async page => {
+        const itemIds = page.properties.항목?.relation?.map(r => r.id) || []
+        const items = await fetchInvoiceItems(itemIds)
+        return transformNotionToInvoice(page, items)
+      })
+  )
+}
+
+/**
+ * 특정 날짜 이전에 만료 예정인 견적서 중 아직 만료 처리되지 않은 목록 조회 (크론 만료 처리용)
+ * expires_at 가 date 이하이고 sent/viewed/negotiating 상태인 견적서를 반환합니다.
+ *
+ * @param date - 조회 기준일 (ISO 8601 날짜 문자열, 예: "2026-04-16")
+ */
+export async function findExpiredBefore(date: string): Promise<Invoice[]> {
+  const dataSourceId = await getDataSourceId()
+
+  const response = await notion.dataSources.query({
+    data_source_id: dataSourceId,
+    page_size: 100,
+    filter: {
+      and: [
+        {
+          property: 'expires_at',
+          date: { on_or_before: date },
+        },
+        {
+          or: [
+            { property: '상태', select: { equals: '발송됨' } },
+            { property: '상태', select: { equals: '검토중' } },
+            { property: '상태', select: { equals: '네고중' } },
+          ],
+        },
+      ],
+    },
+  })
+
+  return Promise.all(
+    response.results
+      .filter((page): page is NotionPage => 'properties' in page)
+      .filter(isInvoicePage)
+      .map(async page => {
+        const itemIds = page.properties.항목?.relation?.map(r => r.id) || []
+        const items = await fetchInvoiceItems(itemIds)
+        return transformNotionToInvoice(page, items)
+      })
+  )
+}
+
+/**
  * 캐싱이 적용된 견적서 검색 (InvoiceFilters 인터페이스 유지)
  * @param filters - 검색 필터
  * @param pageSize - 페이지당 항목 수

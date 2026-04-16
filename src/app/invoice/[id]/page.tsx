@@ -6,6 +6,7 @@ import { InvoiceSummary } from '@/components/invoice/InvoiceSummary'
 import { PDFDownloadButton } from '@/components/invoice/PDFDownloadButton'
 import { InvoiceSkeleton } from '@/components/invoice/InvoiceSkeleton'
 import { RecipientActions } from '@/app/invoice/[id]/_components/RecipientActions'
+import { ExpiredNotice } from '@/app/invoice/[id]/_components/ExpiredNotice'
 import { getOptimizedInvoice } from '@/lib/services/invoice.service'
 import { markInvoiceAsViewed } from '@/lib/services/invoice-status.service'
 import { getLatestDescendant } from '@/lib/services/invoice-nego.service'
@@ -121,6 +122,9 @@ async function InvoiceContent({ id }: { id: string }) {
 
             {/* 구분선 */}
             <Separator className="my-8" />
+
+            {/* 만료 안내 (expired 상태) */}
+            {invoiceData.status === 'expired' && <ExpiredNotice />}
 
             {/* 수신자 액션 버튼 (수락/거절/네고 제안, terminal/v1 상태 시 자동 숨김) */}
             <RecipientActions
