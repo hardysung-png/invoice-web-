@@ -12,7 +12,14 @@ import {
 import { InvalidTransitionError } from '@/lib/errors'
 import { updateNotionPage } from '@/lib/notion'
 import { INVOICES_PROPS } from '@/lib/constants/notion-schema'
-import type { InvoiceStatus, InvoiceStatusV2 } from '@/types/invoice'
+import type { Invoice, InvoiceStatus, InvoiceStatusV2 } from '@/types/invoice'
+import { dispatchInvoiceEvent } from './invoice-events'
+
+/** Slack 이벤트 전송에 필요한 최소 견적서 스냅샷 */
+type InvoiceSnapshot = Pick<
+  Invoice,
+  'id' | 'invoiceNumber' | 'clientName' | 'totalAmount'
+>
 
 export { InvalidTransitionError }
 
@@ -37,18 +44,20 @@ export function assertValidTransition(
 /**
  * 견적서 상태를 업데이트합니다.
  * - 전이 규칙 검증 후 Notion 업데이트
- * - 성공 시 캐시 무효화
+ * - 성공 시 캐시 무효화 + Slack 이벤트 디스패치 (fire-and-forget)
  *
  * @param pageId - 견적서 Notion 페이지 ID
  * @param currentStatus - 현재 견적서 상태
  * @param newStatus - 변경할 상태
+ * @param invoice - Slack 알림용 견적서 스냅샷 (선택)
  * @throws {InvalidTransitionError} 허용되지 않은 상태 전이
  * @throws {NotionUpdateError} Notion API 업데이트 실패
  */
 export async function transitionInvoiceStatus(
   pageId: string,
   currentStatus: InvoiceStatus,
-  newStatus: InvoiceStatusV2
+  newStatus: InvoiceStatusV2,
+  invoice?: InvoiceSnapshot
 ): Promise<void> {
   // 상태 전이 규칙 검증
   assertValidTransition(currentStatus, newStatus)
@@ -64,6 +73,11 @@ export async function transitionInvoiceStatus(
 
   // 캐시 무효화
   revalidateInvoiceCache()
+
+  // Slack 이벤트 디스패치 (fire-and-forget, 실패 swallow)
+  if (invoice) {
+    dispatchInvoiceEvent(invoice, newStatus)
+  }
 }
 
 /**
@@ -72,12 +86,14 @@ export async function transitionInvoiceStatus(
  *
  * @param pageId - 견적서 Notion 페이지 ID
  * @param currentStatus - 현재 견적서 상태
+ * @param invoice - Slack 알림용 견적서 스냅샷 (선택)
  */
 export async function acceptInvoice(
   pageId: string,
-  currentStatus: InvoiceStatus
+  currentStatus: InvoiceStatus,
+  invoice?: InvoiceSnapshot
 ): Promise<void> {
-  await transitionInvoiceStatus(pageId, currentStatus, 'accepted')
+  await transitionInvoiceStatus(pageId, currentStatus, 'accepted', invoice)
 }
 
 /**
@@ -87,11 +103,13 @@ export async function acceptInvoice(
  * @param pageId - 견적서 Notion 페이지 ID
  * @param currentStatus - 현재 견적서 상태
  * @param reason - 거절 사유 (선택)
+ * @param invoice - Slack 알림용 견적서 스냅샷 (선택)
  */
 export async function rejectInvoice(
   pageId: string,
   currentStatus: InvoiceStatus,
-  reason?: string
+  reason?: string,
+  invoice?: InvoiceSnapshot
 ): Promise<void> {
   assertValidTransition(currentStatus, 'rejected')
 
@@ -113,6 +131,10 @@ export async function rejectInvoice(
   )
 
   revalidateInvoiceCache()
+
+  if (invoice) {
+    dispatchInvoiceEvent(invoice, 'rejected', { reason })
+  }
 }
 
 /**
@@ -122,11 +144,13 @@ export async function rejectInvoice(
  * @param pageId - 견적서 Notion 페이지 ID
  * @param currentStatus - 현재 견적서 상태
  * @param memo - 수신자 네고 메모
+ * @param invoice - Slack 알림용 견적서 스냅샷 (선택)
  */
 export async function requestNegotiation(
   pageId: string,
   currentStatus: InvoiceStatus,
-  memo: string
+  memo: string,
+  invoice?: InvoiceSnapshot
 ): Promise<void> {
   assertValidTransition(currentStatus, 'negotiating')
 
@@ -140,6 +164,10 @@ export async function requestNegotiation(
   } as Parameters<typeof updateNotionPage>[1])
 
   revalidateInvoiceCache()
+
+  if (invoice) {
+    dispatchInvoiceEvent(invoice, 'negotiating', { memo })
+  }
 }
 
 /**
@@ -149,12 +177,14 @@ export async function requestNegotiation(
  *
  * @param pageId - 견적서 Notion 페이지 ID
  * @param currentStatus - 현재 견적서 상태
+ * @param invoice - Slack 알림용 견적서 스냅샷 (선택)
  */
 export async function expireInvoice(
   pageId: string,
-  currentStatus: InvoiceStatus
+  currentStatus: InvoiceStatus,
+  invoice?: InvoiceSnapshot
 ): Promise<void> {
-  await transitionInvoiceStatus(pageId, currentStatus, 'expired')
+  await transitionInvoiceStatus(pageId, currentStatus, 'expired', invoice)
 }
 
 /**
@@ -166,12 +196,14 @@ export async function expireInvoice(
  * @param currentStatus - 현재 견적서 상태
  * @param expiresAt - 만료일 (ISO 8601 형식, 선택)
  * @param maxNegoRounds - 최대 네고 횟수 (기본 3)
+ * @param invoice - Slack 알림용 견적서 스냅샷 (선택)
  */
 export async function markInvoiceAsSent(
   pageId: string,
   currentStatus: InvoiceStatus,
   expiresAt?: string,
-  maxNegoRounds: number = DEFAULT_MAX_NEGO_ROUNDS
+  maxNegoRounds: number = DEFAULT_MAX_NEGO_ROUNDS,
+  invoice?: InvoiceSnapshot
 ): Promise<void> {
   assertValidTransition(currentStatus, 'sent')
 
@@ -196,6 +228,10 @@ export async function markInvoiceAsSent(
   )
 
   revalidateInvoiceCache()
+
+  if (invoice) {
+    dispatchInvoiceEvent(invoice, 'sent')
+  }
 }
 
 /**
@@ -204,15 +240,17 @@ export async function markInvoiceAsSent(
  *
  * @param pageId - 견적서 Notion 페이지 ID
  * @param currentStatus - 현재 견적서 상태
+ * @param invoice - Slack 알림용 견적서 스냅샷 (선택)
  */
 export async function markInvoiceAsViewed(
   pageId: string,
-  currentStatus: InvoiceStatus
+  currentStatus: InvoiceStatus,
+  invoice?: InvoiceSnapshot
 ): Promise<void> {
   // 이미 viewed 이상 상태라면 전이하지 않음 (멱등성 보장)
   if (currentStatus !== 'sent') {
     return
   }
 
-  await transitionInvoiceStatus(pageId, currentStatus, 'viewed')
+  await transitionInvoiceStatus(pageId, currentStatus, 'viewed', invoice)
 }
