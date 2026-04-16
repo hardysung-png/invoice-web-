@@ -83,6 +83,7 @@ export async function transitionInvoiceStatus(
 /**
  * 견적서를 수락 처리합니다.
  * viewed 또는 negotiating → accepted 전이
+ * sent 상태에서 수락하는 경우 먼저 viewed로 전이 후 수락합니다.
  *
  * @param pageId - 견적서 Notion 페이지 ID
  * @param currentStatus - 현재 견적서 상태
@@ -93,12 +94,20 @@ export async function acceptInvoice(
   currentStatus: InvoiceStatus,
   invoice?: InvoiceSnapshot
 ): Promise<void> {
+  // sent 상태에서 바로 수락하는 경우: viewed 전이 먼저 실행 (Slack 열람 이벤트 발송)
+  if (currentStatus === 'sent') {
+    await transitionInvoiceStatus(pageId, 'sent', 'viewed', invoice)
+    await transitionInvoiceStatus(pageId, 'viewed', 'accepted', invoice)
+    return
+  }
+
   await transitionInvoiceStatus(pageId, currentStatus, 'accepted', invoice)
 }
 
 /**
  * 견적서를 거절 처리합니다.
  * viewed 또는 negotiating → rejected 전이
+ * sent 상태에서 거절하는 경우 먼저 viewed로 전이 후 거절합니다.
  *
  * @param pageId - 견적서 Notion 페이지 ID
  * @param currentStatus - 현재 견적서 상태
@@ -111,7 +120,15 @@ export async function rejectInvoice(
   reason?: string,
   invoice?: InvoiceSnapshot
 ): Promise<void> {
-  assertValidTransition(currentStatus, 'rejected')
+  // sent 상태에서 바로 거절하는 경우: viewed 전이 먼저 실행 (Slack 열람 이벤트 발송)
+  const effectiveStatus: InvoiceStatus =
+    currentStatus === 'sent' ? 'viewed' : currentStatus
+
+  if (currentStatus === 'sent') {
+    await transitionInvoiceStatus(pageId, 'sent', 'viewed', invoice)
+  }
+
+  assertValidTransition(effectiveStatus, 'rejected')
 
   const properties: Record<string, unknown> = {
     [INVOICES_PROPS.STATUS]: {
