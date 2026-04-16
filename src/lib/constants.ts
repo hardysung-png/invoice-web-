@@ -4,36 +4,101 @@
  */
 
 /**
- * 견적서 상태 상수
- * CSV 데이터 기반: "대기", "승인", "거절"
+ * v1 견적서 상태 상수 (레거시, Task 028 마이그레이션 완료 후 제거 예정)
  */
-export const INVOICE_STATUS = {
+export const INVOICE_STATUS_V1 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
+} as const
+
+/**
+ * v2 견적서 상태 상수 (6단계 상태 모델)
+ */
+export const INVOICE_STATUS_V2 = {
+  SENT: 'sent',
+  VIEWED: 'viewed',
+  ACCEPTED: 'accepted',
+  REJECTED: 'rejected',
+  NEGOTIATING: 'negotiating',
+  EXPIRED: 'expired',
+} as const
+
+/**
+ * 통합 견적서 상태 상수 (마이그레이션 기간 v1 + v2 공존)
+ */
+export const INVOICE_STATUS = {
+  ...INVOICE_STATUS_V1,
+  ...INVOICE_STATUS_V2,
 } as const
 
 export type InvoiceStatusKey = keyof typeof INVOICE_STATUS
 export type InvoiceStatusValue = (typeof INVOICE_STATUS)[InvoiceStatusKey]
 
 /**
- * 견적서 상태 한글 레이블
- * Notion의 한글 상태값과 영문 상태값 매핑
+ * 견적서 상태 한글 레이블 (v1 + v2)
  */
 export const INVOICE_STATUS_LABELS = {
+  // v1 (레거시)
   pending: '대기',
   approved: '승인',
+  // v2
+  sent: '발송됨',
+  viewed: '검토중',
+  accepted: '수락',
   rejected: '거절',
+  negotiating: '네고중',
+  expired: '만료',
 } as const
 
 /**
- * 한글 상태값을 영문 상태값으로 변환
+ * Notion 한글 상태값 → 영문 상태값 변환 맵 (v1 + v2)
  */
 export const KOREAN_TO_STATUS_MAP = {
+  // v1 (레거시)
   대기: 'pending',
   승인: 'approved',
+  // v2
+  발송됨: 'sent',
+  검토중: 'viewed',
+  수락: 'accepted',
   거절: 'rejected',
+  네고중: 'negotiating',
+  만료: 'expired',
 } as const
+
+/**
+ * 영문 상태값 → Notion 한글 상태값 변환 맵 (v2 기준)
+ */
+export const STATUS_TO_KOREAN_MAP = {
+  pending: '대기',
+  approved: '승인',
+  sent: '발송됨',
+  viewed: '검토중',
+  accepted: '수락',
+  rejected: '거절',
+  negotiating: '네고중',
+  expired: '만료',
+} as const
+
+/**
+ * v2 유효 상태 전이 규칙
+ * key: 현재 상태, value: 전이 가능한 상태 배열
+ */
+export const VALID_STATUS_TRANSITIONS = {
+  sent: ['viewed', 'expired'],
+  viewed: ['accepted', 'rejected', 'negotiating', 'expired'],
+  accepted: [],
+  rejected: [],
+  negotiating: ['accepted', 'rejected', 'negotiating', 'expired'],
+  expired: [],
+  // v1 레거시 (마이그레이션 이전 기록에만 존재)
+  pending: ['sent'],
+  approved: [],
+} as const
+
+/** 최대 네고 횟수 기본값 */
+export const DEFAULT_MAX_NEGO_ROUNDS = 3
 
 /**
  * PDF 설정 상수
