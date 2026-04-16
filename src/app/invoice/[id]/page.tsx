@@ -8,12 +8,13 @@ import { InvoiceSkeleton } from '@/components/invoice/InvoiceSkeleton'
 import { RecipientActions } from '@/app/invoice/[id]/_components/RecipientActions'
 import { getOptimizedInvoice } from '@/lib/services/invoice.service'
 import { markInvoiceAsViewed } from '@/lib/services/invoice-status.service'
+import { getLatestDescendant } from '@/lib/services/invoice-nego.service'
 import {
   acceptInvoiceAction,
   rejectInvoiceAction,
   proposeNegotiationAction,
 } from '@/app/invoice/[id]/actions'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
@@ -61,6 +62,12 @@ export async function generateMetadata({
  * 이를 통해 점진적 로딩과 스켈레톤 UI를 제공
  */
 async function InvoiceContent({ id }: { id: string }) {
+  // 최신 자식(leaf) 리다이렉트: 부모 URL로 접근 시 최신 네고 견적서로 이동
+  const latestId = await getLatestDescendant(id)
+  if (latestId !== id) {
+    redirect(`/invoice/${latestId}`)
+  }
+
   // 최적화된 견적서 조회 (캐싱 + Request Deduplication)
   let invoiceData
   try {
