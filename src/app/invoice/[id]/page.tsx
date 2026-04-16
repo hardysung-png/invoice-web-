@@ -11,6 +11,7 @@ import { markInvoiceAsViewed } from '@/lib/services/invoice-status.service'
 import {
   acceptInvoiceAction,
   rejectInvoiceAction,
+  proposeNegotiationAction,
 } from '@/app/invoice/[id]/actions'
 import { notFound } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
@@ -114,12 +115,14 @@ async function InvoiceContent({ id }: { id: string }) {
             {/* 구분선 */}
             <Separator className="my-8" />
 
-            {/* 수신자 액션 버튼 (수락/거절, terminal/v1 상태 시 자동 숨김) */}
+            {/* 수신자 액션 버튼 (수락/거절/네고 제안, terminal/v1 상태 시 자동 숨김) */}
             <RecipientActions
               invoiceId={invoiceData.id}
               currentStatus={invoiceData.status}
+              items={invoiceData.items}
               onAccept={acceptInvoiceAction}
               onReject={rejectInvoiceAction}
+              onNegotiate={proposeNegotiationAction}
             />
 
             {/* 액션 버튼 영역 */}
