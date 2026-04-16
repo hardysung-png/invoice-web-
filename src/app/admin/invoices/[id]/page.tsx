@@ -19,9 +19,14 @@ import { Separator } from '@/components/ui/separator'
 import { StatusBadge } from '@/components/admin/status-badge'
 import { CopyButton } from '@/components/admin/copy-button'
 import { SendButton } from '@/app/admin/invoices/_components/SendButton'
+import { CounterProposalForm } from '@/app/admin/invoices/[id]/_components/CounterProposalForm'
+import { NegotiationLogModal } from '@/app/admin/invoices/[id]/_components/NegotiationLogModal'
 import { getOptimizedInvoice } from '@/lib/services/invoice.service'
+import { getNegoChain } from '@/lib/services/invoice-nego.service'
+import { counterProposeAction } from '@/app/admin/invoices/[id]/actions'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { generateInvoiceUrl } from '@/lib/utils/link-generator'
+import { ACTIONABLE_STATUSES } from '@/lib/constants'
 
 interface AdminInvoiceDetailPageProps {
   params: Promise<{ id: string }>
@@ -40,6 +45,18 @@ export default async function AdminInvoiceDetailPage({
   }
 
   const invoiceUrl = generateInvoiceUrl(invoice.id)
+
+  // 네고 체인 조회 (부모가 있거나 자식이 있는 경우에만)
+  const hasNegoHistory =
+    !!invoice.parentInvoiceId ||
+    (invoice.childInvoiceIds && invoice.childInvoiceIds.length > 0)
+  const negoChain = hasNegoHistory ? await getNegoChain(invoice.id) : []
+
+  // 역제안 가능 여부: 액션 가능한 상태 (sent/viewed/negotiating)
+  // 수신자 네고에 대한 응답이므로 다양한 상태에서 역제안 허용
+  const canCounterPropose = (ACTIONABLE_STATUSES as readonly string[]).includes(
+    invoice.status
+  )
 
   return (
     <div className="space-y-6">
@@ -65,7 +82,17 @@ export default async function AdminInvoiceDetailPage({
           <p className="text-muted-foreground mt-1">{invoice.clientName}</p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {/* 네고 로그 (네고 히스토리가 있을 때만 표시) */}
+          {negoChain.length > 1 && <NegotiationLogModal chain={negoChain} />}
+          {/* 역제안 (negotiating 상태일 때만 표시) */}
+          {canCounterPropose && (
+            <CounterProposalForm
+              invoiceId={invoice.id}
+              items={invoice.items}
+              onCounterPropose={counterProposeAction}
+            />
+          )}
           <SendButton
             invoiceId={invoice.id}
             currentStatus={invoice.status}

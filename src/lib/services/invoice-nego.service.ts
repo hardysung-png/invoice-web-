@@ -11,7 +11,7 @@ import { FloorPriceViolationError, NegoRoundsLimitError } from '@/lib/errors'
 import { INVOICES_PROPS, ITEMS_PROPS } from '@/lib/constants/notion-schema'
 import { STATUS_TO_KOREAN_MAP } from '@/lib/constants'
 import { env } from '@/lib/env'
-import type { Invoice, InvoiceItem } from '@/types/invoice'
+import type { Invoice, InvoiceItem, NegoChainNode } from '@/types/invoice'
 
 export { FloorPriceViolationError, NegoRoundsLimitError }
 
@@ -111,11 +111,21 @@ async function getItemsDatabaseId(invoice: Invoice): Promise<string> {
   if (!('parent' in page)) {
     throw new Error('항목 페이지를 완전히 조회할 수 없습니다.')
   }
-  if (page.parent.type !== 'database_id') {
-    throw new Error('항목 페이지의 부모가 데이터베이스가 아닙니다.')
+
+  // Notion API의 parent 타입을 유연하게 처리합니다.
+  // - 표준: { type: 'database_id', database_id: string }
+  // - 신규(data_source_id): { type: 'data_source_id', data_source_id: string, database_id: string }
+  // 두 경우 모두 database_id 필드가 포함되어 있으므로 이를 직접 참조합니다.
+  const parent = page.parent as Record<string, unknown>
+  const databaseId = parent.database_id as string | undefined
+
+  if (!databaseId) {
+    throw new Error(
+      `항목 페이지의 부모에서 데이터베이스 ID를 찾을 수 없습니다. (parent.type: ${parent.type})`
+    )
   }
 
-  cachedItemsDatabaseId = page.parent.database_id
+  cachedItemsDatabaseId = databaseId
   return cachedItemsDatabaseId
 }
 
@@ -184,6 +194,65 @@ export async function getLatestDescendant(rootId: string): Promise<string> {
   }
 
   return currentId
+}
+
+/**
+ * 루트~리프 네고 체인 조회
+ *
+ * 주어진 노드에서 루트를 찾은 뒤, 루트 → 리프 순서로 체인을 구성합니다.
+ * 각 노드의 깊이(depth)를 기반으로 제안 주체를 결정합니다.
+ *   - depth 짝수 (0, 2, 4, ...): 어드민 제안
+ *   - depth 홀수 (1, 3, 5, ...): 수신자 제안
+ *
+ * @param invoiceId - 탐색 시작 견적서 ID (루트가 아니어도 동작)
+ * @returns 루트부터 리프까지의 NegoChainNode 배열
+ */
+export async function getNegoChain(
+  invoiceId: string
+): Promise<NegoChainNode[]> {
+  // 1. 루트 탐색 (parentInvoiceId 없는 노드)
+  let rootId = invoiceId
+  const visited = new Set<string>()
+  let safetyDepth = 0
+
+  while (safetyDepth < MAX_NEGO_DEPTH) {
+    if (visited.has(rootId)) break
+    visited.add(rootId)
+    const node = await getInvoiceFromNotion(rootId)
+    if (!node.parentInvoiceId) break
+    rootId = node.parentInvoiceId
+    safetyDepth++
+  }
+
+  // 2. 루트 → 리프 방향으로 체인 수집
+  const chain: NegoChainNode[] = []
+  let currentId: string | undefined = rootId
+  const chainVisited = new Set<string>()
+  let depth = 0
+
+  while (currentId && depth < MAX_NEGO_DEPTH) {
+    if (chainVisited.has(currentId)) break
+    chainVisited.add(currentId)
+
+    const invoice = await getInvoiceFromNotion(currentId)
+    chain.push({
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      status: invoice.status,
+      issueDate: invoice.issueDate,
+      totalAmount: invoice.totalAmount,
+      proposedBy: depth % 2 === 0 ? 'admin' : 'recipient',
+      negoMemo: invoice.negoMemo,
+      items: invoice.items,
+    })
+
+    const children = invoice.childInvoiceIds
+    if (!children || children.length === 0) break
+    currentId = children[children.length - 1]
+    depth++
+  }
+
+  return chain
 }
 
 /**
