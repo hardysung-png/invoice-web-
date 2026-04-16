@@ -18,6 +18,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { StatusBadge } from '@/components/admin/status-badge'
 import { CopyButton } from '@/components/admin/copy-button'
+import { SendButton } from '@/app/admin/invoices/_components/SendButton'
 import { getOptimizedInvoice } from '@/lib/services/invoice.service'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { generateInvoiceUrl } from '@/lib/utils/link-generator'
@@ -65,6 +66,11 @@ export default async function AdminInvoiceDetailPage({
         </div>
 
         <div className="flex gap-2">
+          <SendButton
+            invoiceId={invoice.id}
+            currentStatus={invoice.status}
+            expiresAt={invoice.expiresAt}
+          />
           <CopyButton text={invoiceUrl} />
           <Button variant="outline" size="sm" asChild>
             <Link href={invoiceUrl} target="_blank">
