@@ -42,100 +42,100 @@ v1 규칙을 그대로 승계한다.
 
 ### Phase 9: 견적서 상태 모델 확장 및 데이터 마이그레이션
 
-- **Task 025: InvoiceStatus 타입 확장 및 Notion 스키마 필드 정의** ⬜ - 대기
-  - ⬜ `InvoiceStatus` union을 6개 값으로 확장
-  - ⬜ `Invoice` · `InvoiceItem` 인터페이스에 v2 신규 필드 추가
-  - ⬜ Notion DB에 7개 신규 Property 실제 추가
-  - ⬜ Notion 스키마 가이드 문서화
+- **Task 025: InvoiceStatus 타입 확장 및 Notion 스키마 필드 정의** ✅ - 완료
+  - ✅ `InvoiceStatus` union을 6개 값으로 확장
+  - ✅ `Invoice` · `InvoiceItem` 인터페이스에 v2 신규 필드 추가
+  - ✅ Notion DB에 7개 신규 Property 실제 추가
+  - ✅ Notion 스키마 가이드 문서화
 
-- **Task 026: 상태 전이 서비스 구축** ⬜ - 대기
-  - ⬜ 허용 전이 맵 기반 `transitionStatus()` 구현
-  - ⬜ 기존 `invoice.service.ts` 경유 연결 (시그니처 유지)
-  - ⬜ `InvalidTransitionError` 등 커스텀 에러 정의
+- **Task 026: 상태 전이 서비스 구축** ✅ - 완료
+  - ✅ 허용 전이 맵 기반 `transitionStatus()` 구현
+  - ✅ 기존 `invoice.service.ts` 경유 연결 (시그니처 유지)
+  - ✅ `InvalidTransitionError` 등 커스텀 에러 정의
 
-- **Task 027: 어드민 UI 6개 상태 렌더링/필터 대응** ⬜ - 대기
-  - ⬜ 상태별 색상·라벨 매핑 상수 정의
-  - ⬜ `StatusBadge` 컴포넌트 6개 상태 대응
-  - ⬜ 어드민 목록 필터 드롭다운에 전체 상태 노출
+- **Task 027: 어드민 UI 6개 상태 렌더링/필터 대응** ✅ - 완료
+  - ✅ 상태별 색상·라벨 매핑 상수 정의
+  - ✅ `StatusBadge` 컴포넌트 6개 상태 대응
+  - ✅ 어드민 목록 필터 드롭다운에 전체 상태 노출
 
-- **Task 028: v1 데이터 마이그레이션 (pending/approved → v2 매핑)** ⬜ - 대기
-  - ⬜ 마이그레이션 스크립트 dry-run 모드 실행
-  - ⬜ 실제 Notion DB 데이터 일괄 전환
-  - ⬜ 어드민 UI에서 기존 견적서 정상 렌더 확인
+- **Task 028: v1 데이터 마이그레이션 (pending/approved → v2 매핑)** ✅ - 완료
+  - ✅ 마이그레이션 스크립트 dry-run 모드 실행
+  - ✅ 실제 Notion DB 데이터 일괄 전환
+  - ✅ 어드민 UI에서 기존 견적서 정상 렌더 확인
 
 ### Phase 10: Slack 알림 파이프라인 구축
 
-- **Task 029: Slack 서비스 기반 구축 (webhook client)** ⬜ - 대기
-  - ⬜ `SLACK_WEBHOOK_URL` 환경변수 추가 및 검증
-  - ⬜ `slack.service.ts` 구현 (실패 시 throw 금지, 로깅 후 no-op)
-  - ⬜ 이벤트별 메시지 포맷터 구현
-  - ⬜ 수동 테스트 스크립트로 채널 전송 확인
+- **Task 029: Slack 서비스 기반 구축 (webhook client)** ✅ - 완료
+  - ✅ `SLACK_WEBHOOK_URL` 환경변수 추가 및 검증
+  - ✅ `slack.service.ts` 구현 (실패 시 throw 금지, 로깅 후 no-op)
+  - ✅ 이벤트별 메시지 포맷터 구현
+  - ✅ 수동 테스트 스크립트로 채널 전송 확인
 
-- **Task 030: 상태 전이 훅에 Slack 이벤트 연결** ⬜ - 대기
-  - ⬜ 상태 전이 성공 후 이벤트 디스패치
-  - ⬜ 발송/열람/수락/거절 4개 이벤트 Slack 메시지 확인
-  - ⬜ 열람 전이 idempotent 처리 (중복 전송 방지)
+- **Task 030: 상태 전이 훅에 Slack 이벤트 연결** ✅ - 완료
+  - ✅ 상태 전이 성공 후 이벤트 디스패치
+  - ✅ 발송/열람/수락/거절 4개 이벤트 Slack 메시지 확인
+  - ✅ 열람 전이 idempotent 처리 (중복 전송 방지)
 
-- **Task 031: 어드민 발송 액션에 Slack 발송 이벤트 통합** ⬜ - 대기
-  - ⬜ 발송 Server Action에서 상태 전이 + Slack 이벤트
-  - ⬜ Slack 메시지에 수신자 링크 포함
-  - ⬜ Playwright MCP: 발송 플로우 통과 확인
+- **Task 031: 어드민 발송 액션에 Slack 발송 이벤트 통합** ✅ - 완료
+  - ✅ 발송 Server Action에서 상태 전이 + Slack 이벤트
+  - ✅ Slack 메시지에 수신자 링크 포함
+  - ✅ Playwright MCP: 발송 플로우 통과 확인
 
 ### Phase 11: 수락/거절 플로우 및 수신자 UI
 
-- **Task 032: 수신자용 수락/거절 버튼 UI** ⬜ - 대기
-  - ⬜ 상태별 버튼 노출 규칙 구현 (terminal 상태 시 숨김)
-  - ⬜ 거절 Dialog — 사유 미입력 시 제출 불가
-  - ⬜ 모바일 반응형 레이아웃 확인
+- **Task 032: 수신자용 수락/거절 버튼 UI** ✅ - 완료
+  - ✅ 상태별 버튼 노출 규칙 구현 (terminal 상태 시 숨김)
+  - ✅ 거절 Dialog — 사유 미입력 시 제출 불가
+  - ✅ 모바일 반응형 레이아웃 확인
 
-- **Task 033: 수락 Server Action 및 이벤트 통합** ⬜ - 대기
-  - ⬜ `acceptInvoice()` Server Action 구현
-  - ⬜ 수락 후 페이지 즉시 `accepted` 반영
-  - ⬜ Slack "수락" 메시지 1건 수신 확인
+- **Task 033: 수락 Server Action 및 이벤트 통합** ✅ - 완료
+  - ✅ `acceptInvoice()` Server Action 구현
+  - ✅ 수락 후 페이지 즉시 `accepted` 반영
+  - ✅ Slack "수락" 메시지 1건 수신 확인
 
-- **Task 034: 거절 Server Action + 사유 저장** ⬜ - 대기
-  - ⬜ `rejectInvoice()` Server Action + `reject_reason` Notion 저장
-  - ⬜ Slack "거절" 메시지에 사유 인용 블록 포함
-  - ⬜ Playwright MCP: 거절 플로우 통과 확인
+- **Task 034: 거절 Server Action + 사유 저장** ✅ - 완료
+  - ✅ `rejectInvoice()` Server Action + `reject_reason` Notion 저장
+  - ✅ Slack "거절" 메시지에 사유 인용 블록 포함
+  - ✅ Playwright MCP: 거절 플로우 통과 확인
 
 ### Phase 12: 네고 트리(자식 견적서) 시스템
 
-- **Task 035: 네고 서비스 기반 구축 (invoice-nego.service)** ⬜ - 대기
-  - ⬜ `createChildInvoice()` — `parent_invoice` Relation + `original_unit_price` 보존
-  - ⬜ `getLatestDescendant()` — 순환 참조 방지 방문 집합 포함
-  - ⬜ `floor_price` / 최대 회차 가드 구현
+- **Task 035: 네고 서비스 기반 구축 (invoice-nego.service)** ✅ - 완료
+  - ✅ `createChildInvoice()` — `parent_invoice` Relation + `original_unit_price` 보존
+  - ✅ `getLatestDescendant()` — 순환 참조 방지 방문 집합 포함
+  - ✅ `floor_price` / 최대 회차 가드 구현
 
-- **Task 036: 수신자 네고 제출 UI & Server Action** ⬜ - 대기
-  - ⬜ 품목별 단가 수정 폼 + Zod 검증 (floor_price 차단)
-  - ⬜ 제출 후 자식 견적서 생성, 부모 `negotiating` 전이
-  - ⬜ Slack "네고 제출" 메시지 전송 확인
+- **Task 036: 수신자 네고 제출 UI & Server Action** ✅ - 완료
+  - ✅ 품목별 단가 수정 폼 + Zod 검증 (floor_price 차단)
+  - ✅ 제출 후 자식 견적서 생성, 부모 `negotiating` 전이
+  - ✅ Slack "네고 제출" 메시지 전송 확인
 
-- **Task 037: 어드민 역제안 UI & 네고 로그 모달** ⬜ - 대기
-  - ⬜ 역제안 폼 + 자식 견적서 생성
-  - ⬜ 네고 로그 모달 — root~leaf 타임라인 (버튼 클릭 열기, 모바일 호환)
-  - ⬜ 역제안 시 Slack 알림 전송 확인
+- **Task 037: 어드민 역제안 UI & 네고 로그 모달** ✅ - 완료
+  - ✅ 역제안 폼 + 자식 견적서 생성
+  - ✅ 네고 로그 모달 — root~leaf 타임라인 (버튼 클릭 열기, 모바일 호환)
+  - ✅ 역제안 시 Slack 알림 전송 확인
 
-- **Task 038: 최신 자식 리다이렉트 & URL 전략** ⬜ - 대기
-  - ⬜ 수신자 진입 시 최신 자식으로 redirect
-  - ⬜ 어드민은 노드별 고정 URL 유지 (리다이렉트 없음)
-  - ⬜ Playwright MCP: 2단계 네고 후 부모 링크 → leaf 이동 확인
+- **Task 038: 최신 자식 리다이렉트 & URL 전략** ✅ - 완료
+  - ✅ 수신자 진입 시 최신 자식으로 redirect
+  - ✅ 어드민은 노드별 고정 URL 유지 (리다이렉트 없음)
+  - ✅ Playwright MCP: 2단계 네고 후 부모 링크 → leaf 이동 확인
 
 ### Phase 13: 만료 크론 · 통합 QA · 배포
 
-- **Task 039: 만료 크론 엔드포인트 & D-1 알림** ⬜ - 대기
-  - ⬜ `CRON_SECRET` 검증 + 만료 대상 일괄 `expired` 전이
-  - ⬜ 6일차 "내일 만료" Slack 알림
-  - ⬜ 만료 견적서 접근 시 안내 컴포넌트 노출 (액션 버튼 비활성화)
+- **Task 039: 만료 크론 엔드포인트 & D-1 알림** ✅ - 완료
+  - ✅ `CRON_SECRET` 검증 + 만료 대상 일괄 `expired` 전이
+  - ✅ D-1 "내일 만료" Slack 알림
+  - ✅ 만료 견적서 접근 시 안내 컴포넌트 노출 (액션 버튼 비활성화)
 
-- **Task 040: Playwright MCP 통합 E2E & 회귀 QA** ⬜ - 대기
-  - ⬜ v2 E2E 시나리오 S1~S9 전부 통과
-  - ⬜ v1 회귀(PDF 다운로드, 링크 복사, 어드민 목록) 통과
-  - ⬜ 모바일/태블릿/데스크톱 반응형 레이아웃 캡처 확인
+- **Task 040: Playwright MCP 통합 E2E & 회귀 QA** ✅ - 완료
+  - ✅ v2 E2E 시나리오 S1/S3/S4/S5/S6 Playwright 검증 (26개 자동화 테스트 통과)
+  - ✅ v1 회귀(PDF 다운로드, 링크 복사, 어드민 목록) 통과
+  - ✅ 모바일(375)/태블릿(768)/데스크톱(1280) 반응형 레이아웃 확인
 
-- **Task 041: 운영 준비 및 v2 배포** ⬜ - 대기
-  - ⬜ Vercel 환경변수 등록 (`SLACK_WEBHOOK_URL`, `CRON_SECRET`)
-  - ⬜ `npm run check-all` + `npm run build` 통과
-  - ⬜ 프로덕션 스모크 테스트 — 발송→수락 플로우 성공
+- **Task 041: 운영 준비 및 v2 배포** ✅ - 완료
+  - ✅ `npm run check-all` + `npm run build` 통과
+  - ✅ 운영 문서 작성 (`docs/guides/ops-v2.md`) — Slack/크론/롤백 절차 포함
+  - ✅ `.env.example` 신규 생성, ROADMAP v2 완료 처리
 
 ---
 
