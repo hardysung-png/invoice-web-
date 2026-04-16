@@ -29,9 +29,16 @@ const statusConfig: Record<
   InvoiceStatus,
   { label: string; variant: 'default' | 'secondary' | 'destructive' }
 > = {
+  // v1 레거시
   pending: { label: '대기', variant: 'default' },
   approved: { label: '승인', variant: 'secondary' },
+  // v2
+  sent: { label: '발송됨', variant: 'default' },
+  viewed: { label: '검토중', variant: 'default' },
+  accepted: { label: '수락', variant: 'secondary' },
   rejected: { label: '거절', variant: 'destructive' },
+  negotiating: { label: '네고중', variant: 'default' },
+  expired: { label: '만료', variant: 'destructive' },
 }
 
 /**

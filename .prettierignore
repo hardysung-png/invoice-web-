@@ -39,3 +39,7 @@ Thumbs.db
 
 # Generated files
 next-env.d.ts
+
+# Playwright 테스트 아티팩트
+test-results/
+playwright-report/

@@ -41,6 +41,16 @@ export function transformNotionToInvoice(
   // items에서 직접 계산하여 신뢰성을 보장함
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
 
+  // v2 신규 필드 파싱
+  const expiresAt = props.expires_at?.date?.start ?? undefined
+  const maxNegoRounds = props.max_nego_rounds?.number ?? undefined
+  const parentInvoiceId = props.parent_invoice?.relation?.[0]?.id ?? undefined
+  const childInvoiceIds =
+    props.child_invoices?.relation?.map(r => r.id) ?? undefined
+  const rejectReason =
+    extractPlainText(props.reject_reason?.rich_text) || undefined
+  const negoMemo = extractPlainText(props.nego_memo?.rich_text) || undefined
+
   return {
     id: page.id,
     invoiceNumber,
@@ -50,6 +60,13 @@ export function transformNotionToInvoice(
     totalAmount,
     status,
     items,
+    ...(expiresAt !== undefined && { expiresAt }),
+    ...(maxNegoRounds !== undefined && { maxNegoRounds }),
+    ...(parentInvoiceId !== undefined && { parentInvoiceId }),
+    ...(childInvoiceIds !== undefined &&
+      childInvoiceIds.length > 0 && { childInvoiceIds }),
+    ...(rejectReason !== undefined && { rejectReason }),
+    ...(negoMemo !== undefined && { negoMemo }),
   }
 }
 
@@ -65,9 +82,15 @@ function transformNotionToItem(
 
   // null 체크와 기본값 처리
   const description = extractPlainText(props.항목명?.title) || '항목명 없음'
-  const quantity = props.수량?.number || 0
-  const unitPrice = props.단가?.number || 0
-  const amount = props.금액?.number || quantity * unitPrice
+  const quantity = props.수량?.number ?? 0
+  const unitPrice = props.단가?.number ?? 0
+  // formula 타입으로 변경됨 (v2 스키마 반영)
+  const formulaAmount = props.금액?.formula?.number
+  const amount = formulaAmount ?? quantity * unitPrice
+
+  // v2 신규 필드
+  const floorPrice = props.floor_price?.number ?? undefined
+  const originalUnitPrice = props.original_unit_price?.number ?? undefined
 
   return {
     id: page.id,
@@ -75,6 +98,8 @@ function transformNotionToItem(
     quantity,
     unitPrice,
     amount,
+    ...(floorPrice !== undefined && { floorPrice }),
+    ...(originalUnitPrice !== undefined && { originalUnitPrice }),
   }
 }
 
@@ -87,13 +112,13 @@ function mapKoreanStatus(
   koreanStatus: string | null | undefined
 ): InvoiceStatus {
   if (!koreanStatus) {
-    return 'pending'
+    // 상태 미설정 시 v2 기본값 'sent'로 처리
+    return 'sent'
   }
 
-  // 타입 안전성을 위한 체크
   const mappedStatus =
     KOREAN_TO_STATUS_MAP[koreanStatus as keyof typeof KOREAN_TO_STATUS_MAP]
-  return (mappedStatus as InvoiceStatus) || 'pending'
+  return (mappedStatus as InvoiceStatus) || 'sent'
 }
 
 /**
@@ -127,24 +152,6 @@ function getDefaultValidUntil(issueDate: string): string {
     date.setDate(date.getDate() + 7)
     return date.toISOString().split('T')[0]
   }
-}
-
-/**
- * 항목들의 금액 합계 계산
- * @param itemPages - 항목 페이지 배열
- * @returns 총 금액
- */
-function calculateTotalFromItems(
-  itemPages: Array<NotionPage & { properties: ItemPageProperties }>
-): number {
-  return itemPages.reduce((total, page) => {
-    const props = page.properties
-    const quantity = props.수량?.number || 0
-    const unitPrice = props.단가?.number || 0
-    // '금액' 필드가 없으면 수량 × 단가로 계산 (transformNotionToItem과 동일한 로직)
-    const amount = props.금액?.number || quantity * unitPrice
-    return total + amount
-  }, 0)
 }
 
 /**

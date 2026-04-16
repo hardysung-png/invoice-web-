@@ -4,10 +4,33 @@
  */
 
 /**
- * 견적서 상태 타입
- * CSV 데이터 기반: "대기", "승인", "거절"
+ * v1 견적서 상태 타입 (마이그레이션 이전 레거시)
+ * Task 028 마이그레이션 완료 후 제거 예정
  */
-export type InvoiceStatus = 'pending' | 'approved' | 'rejected'
+export type InvoiceStatusV1 = 'pending' | 'approved' | 'rejected'
+
+/**
+ * v2 견적서 상태 타입 (6단계 상태 모델)
+ * - sent: 발송됨 (어드민이 링크 발송)
+ * - viewed: 검토중 (수신자가 최초 열람)
+ * - accepted: 수락 (수신자가 수락)
+ * - rejected: 거절 (수신자가 거절)
+ * - negotiating: 네고중 (수신자가 네고 요청 또는 어드민 역제안 진행 중)
+ * - expired: 만료 (만료일 경과)
+ */
+export type InvoiceStatusV2 =
+  | 'sent'
+  | 'viewed'
+  | 'accepted'
+  | 'rejected'
+  | 'negotiating'
+  | 'expired'
+
+/**
+ * 통합 견적서 상태 타입 (마이그레이션 기간 v1 + v2 공존)
+ * Task 028 마이그레이션 완료 후 InvoiceStatusV2로 교체 예정
+ */
+export type InvoiceStatus = InvoiceStatusV1 | InvoiceStatusV2
 
 /**
  * 견적 항목 인터페이스
@@ -24,6 +47,10 @@ export interface InvoiceItem {
   unitPrice: number
   /** 금액 (수량 × 단가) */
   amount: number
+  /** 최소 허용 단가 (네고 하한선, v2 신규) */
+  floorPrice?: number
+  /** 원래 단가 (네고 전 최초 단가, v2 신규) */
+  originalUnitPrice?: number
 }
 
 /**
@@ -45,8 +72,20 @@ export interface Invoice {
   items: InvoiceItem[]
   /** 총 금액 */
   totalAmount: number
-  /** 견적서 상태 (대기/승인/거절) */
+  /** 견적서 상태 */
   status: InvoiceStatus
+  /** 만료일 (ISO 8601 형식, v2 신규) */
+  expiresAt?: string
+  /** 최대 네고 횟수 (기본 3회, v2 신규) */
+  maxNegoRounds?: number
+  /** 부모 견적서 ID (네고 트리 루트 추적, v2 신규) */
+  parentInvoiceId?: string
+  /** 자식 견적서 ID 배열 (네고 역제안 목록, v2 신규) */
+  childInvoiceIds?: string[]
+  /** 거절 사유 (v2 신규) */
+  rejectReason?: string
+  /** 네고 메모 (수신자 네고 요청 내용, v2 신규) */
+  negoMemo?: string
 }
 
 /**

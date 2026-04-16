@@ -92,16 +92,21 @@ export function formatCurrency(
  * @param status 견적서 상태
  * @returns 한국어 상태 텍스트
  */
-export function formatInvoiceStatus(
-  status: 'pending' | 'approved' | 'rejected'
-): string {
-  const statusMap = {
+export function formatInvoiceStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    // v1 레거시
     pending: '대기',
     approved: '승인',
+    // v2
+    sent: '발송됨',
+    viewed: '검토중',
+    accepted: '수락',
     rejected: '거절',
+    negotiating: '네고중',
+    expired: '만료',
   }
 
-  return statusMap[status] || status
+  return statusMap[status] ?? status
 }
 
 /**

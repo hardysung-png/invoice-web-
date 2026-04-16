@@ -337,11 +337,16 @@ export async function searchInvoices(
 
     // 2. 상태 필터
     if (filters.status) {
-      // InvoiceStatus -> Notion 상태 값 매핑
+      // InvoiceStatus -> Notion 상태 값 매핑 (v1 레거시 + v2)
       const statusMap: Record<InvoiceStatus, string> = {
         pending: '대기',
         approved: '승인',
+        sent: '발송됨',
+        viewed: '검토중',
+        accepted: '수락',
         rejected: '거절',
+        negotiating: '네고중',
+        expired: '만료',
       }
 
       notionFilters.push({
