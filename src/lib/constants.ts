@@ -101,6 +101,19 @@ export const VALID_STATUS_TRANSITIONS = {
 export const DEFAULT_MAX_NEGO_ROUNDS = 3
 
 /**
+ * 수신자 액션(수락/거절/네고)이 가능한 v2 상태 목록
+ * terminal 상태에서는 버튼을 숨깁니다.
+ */
+export const ACTIONABLE_STATUSES = ['sent', 'viewed', 'negotiating'] as const
+export type ActionableStatus = (typeof ACTIONABLE_STATUSES)[number]
+
+/**
+ * 더 이상 전이가 불가능한 terminal 상태 목록
+ */
+export const TERMINAL_STATUSES = ['accepted', 'rejected', 'expired'] as const
+export type TerminalStatus = (typeof TERMINAL_STATUSES)[number]
+
+/**
  * PDF 설정 상수
  */
 export const PDF_CONFIG = {

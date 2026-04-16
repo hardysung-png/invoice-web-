@@ -5,8 +5,13 @@ import { InvoiceTable } from '@/components/invoice/InvoiceTable'
 import { InvoiceSummary } from '@/components/invoice/InvoiceSummary'
 import { PDFDownloadButton } from '@/components/invoice/PDFDownloadButton'
 import { InvoiceSkeleton } from '@/components/invoice/InvoiceSkeleton'
+import { RecipientActions } from '@/app/invoice/[id]/_components/RecipientActions'
 import { getOptimizedInvoice } from '@/lib/services/invoice.service'
 import { markInvoiceAsViewed } from '@/lib/services/invoice-status.service'
+import {
+  acceptInvoiceAction,
+  rejectInvoiceAction,
+} from '@/app/invoice/[id]/actions'
 import { notFound } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 import { Suspense } from 'react'
@@ -108,6 +113,14 @@ async function InvoiceContent({ id }: { id: string }) {
 
             {/* 구분선 */}
             <Separator className="my-8" />
+
+            {/* 수신자 액션 버튼 (수락/거절, terminal/v1 상태 시 자동 숨김) */}
+            <RecipientActions
+              invoiceId={invoiceData.id}
+              currentStatus={invoiceData.status}
+              onAccept={acceptInvoiceAction}
+              onReject={rejectInvoiceAction}
+            />
 
             {/* 액션 버튼 영역 */}
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
