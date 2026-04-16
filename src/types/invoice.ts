@@ -104,6 +104,29 @@ export interface CompanyInfo {
 }
 
 /**
+ * 네고 체인 단위 인터페이스
+ * 부모~리프 타임라인 표시에 사용
+ */
+export interface NegoChainNode {
+  /** 견적서 ID */
+  id: string
+  /** 견적서 번호 */
+  invoiceNumber: string
+  /** 상태 */
+  status: InvoiceStatus
+  /** 발행일 */
+  issueDate: string
+  /** 총액 */
+  totalAmount: number
+  /** 제안 주체 ('admin' = 어드민 역제안, 'recipient' = 수신자 네고) */
+  proposedBy: 'admin' | 'recipient'
+  /** 네고 메모 */
+  negoMemo?: string
+  /** 항목 */
+  items: InvoiceItem[]
+}
+
+/**
  * PDF 생성용 데이터 인터페이스
  * 견적서 정보와 회사 정보를 포함
  */
