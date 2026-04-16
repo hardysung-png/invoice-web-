@@ -6,6 +6,7 @@ import { InvoiceSummary } from '@/components/invoice/InvoiceSummary'
 import { PDFDownloadButton } from '@/components/invoice/PDFDownloadButton'
 import { InvoiceSkeleton } from '@/components/invoice/InvoiceSkeleton'
 import { getOptimizedInvoice } from '@/lib/services/invoice.service'
+import { markInvoiceAsViewed } from '@/lib/services/invoice-status.service'
 import { notFound } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 import { Suspense } from 'react'
@@ -68,6 +69,14 @@ async function InvoiceContent({ id }: { id: string }) {
   if (!invoiceData) {
     notFound()
   }
+
+  // 최초 열람: sent → viewed 전이 (멱등성 보장 — viewed 이상이면 no-op)
+  void markInvoiceAsViewed(invoiceData.id, invoiceData.status, {
+    id: invoiceData.id,
+    invoiceNumber: invoiceData.invoiceNumber,
+    clientName: invoiceData.clientName,
+    totalAmount: invoiceData.totalAmount,
+  })
 
   return (
     <div className="flex min-h-screen flex-col">
