@@ -2,8 +2,12 @@
 
 /**
  * 수신자 견적서 페이지 Server Actions
- * - 수락, 거절 액션 (Task 033, 034에서 구현)
  */
+
+import { revalidatePath } from 'next/cache'
+import { getOptimizedInvoice } from '@/lib/services/invoice.service'
+import { acceptInvoice } from '@/lib/services/invoice-status.service'
+import { InvalidTransitionError } from '@/lib/errors'
 
 export interface InvoiceActionResult {
   success: boolean
@@ -11,15 +15,35 @@ export interface InvoiceActionResult {
 }
 
 /**
- * 견적서 수락 Server Action (Task 033에서 구현)
+ * 견적서 수락 Server Action
+ * viewed 또는 negotiating → accepted 전이 + Slack 알림
+ *
  * @param invoiceId - 수락할 견적서 ID
  */
 export async function acceptInvoiceAction(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   invoiceId: string
 ): Promise<InvoiceActionResult> {
-  // Task 033에서 구현 예정
-  return { success: false, error: 'Task 033에서 구현 예정' }
+  try {
+    const invoice = await getOptimizedInvoice(invoiceId)
+
+    await acceptInvoice(invoice.id, invoice.status, {
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      clientName: invoice.clientName,
+      totalAmount: invoice.totalAmount,
+    })
+
+    revalidatePath(`/invoice/${invoiceId}`)
+    revalidatePath(`/admin/invoices/${invoiceId}`)
+
+    return { success: true }
+  } catch (err) {
+    if (err instanceof InvalidTransitionError) {
+      return { success: false, error: `상태 전이 불가: ${err.message}` }
+    }
+    const message = err instanceof Error ? err.message : String(err)
+    return { success: false, error: message }
+  }
 }
 
 /**
