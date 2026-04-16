@@ -125,12 +125,16 @@ export function InvoiceTable({ invoices, currentSort }: InvoiceTableProps) {
                 </div>
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href={`/invoice/${invoice.id}`} target="_blank">
-                    보기
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+                <div className="flex items-center justify-end gap-1">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href={`/admin/invoices/${invoice.id}`}>상세</Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href={`/invoice/${invoice.id}`} target="_blank">
+                      <ExternalLink className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

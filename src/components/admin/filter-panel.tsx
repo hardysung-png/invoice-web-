@@ -132,9 +132,16 @@ export function FilterPanel({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="pending">대기</SelectItem>
-                <SelectItem value="approved">승인</SelectItem>
+                {/* v2 상태 */}
+                <SelectItem value="sent">발송됨</SelectItem>
+                <SelectItem value="viewed">검토중</SelectItem>
+                <SelectItem value="accepted">수락</SelectItem>
                 <SelectItem value="rejected">거절</SelectItem>
+                <SelectItem value="negotiating">네고중</SelectItem>
+                <SelectItem value="expired">만료</SelectItem>
+                {/* v1 레거시 (마이그레이션 전까지 표시) */}
+                <SelectItem value="pending">대기 (레거시)</SelectItem>
+                <SelectItem value="approved">승인 (레거시)</SelectItem>
               </SelectContent>
             </Select>
           </div>
