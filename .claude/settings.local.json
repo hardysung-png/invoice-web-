@@ -14,7 +14,9 @@
       "mcp__shrimp-task-manager",
       "mcp__claude_ai_Notion__notion-fetch",
       "mcp__claude_ai_Notion__notion-update-data-source",
-      "mcp__claude_ai_Notion__notion-create-pages"
+      "mcp__claude_ai_Notion__notion-create-pages",
+      "mcp__claude_ai_Notion__notion-search",
+      "mcp__github__create_pull_request"
     ],
     "deny": [],
     "ask": []
