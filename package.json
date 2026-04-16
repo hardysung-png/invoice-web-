@@ -12,6 +12,8 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "check-all": "npm run typecheck && npm run lint && npm run format:check",
+    "migrate:dry": "npx tsx scripts/migrate-status-v1-to-v2.ts",
+    "migrate:run": "MIGRATE=true npx tsx scripts/migrate-status-v1-to-v2.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
